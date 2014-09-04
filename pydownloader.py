@@ -2,7 +2,7 @@ import urllib2
 
 from os import rename
 
-BLOCKSIZE = (1024**2) + 1 # 1024 Kibibytes in 1 packet.
+BLOCKSIZE = (1024**2) # 1024 Kibibytes in 1 packet.
 
 url = "http://localhost/firefox-29.0.tar.bz2"
 
