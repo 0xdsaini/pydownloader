@@ -1,6 +1,10 @@
+#!/usr/bin/env python
+
 import urllib2
 
-from os import rename
+import pickle
+
+import os
 
 BLOCKSIZE = (1024**2) # 1024 Kibibytes in 1 packet.
 
@@ -10,15 +14,25 @@ metadata = (urllib2.urlopen(url)).info()
 
 file_size = int(metadata.getheaders('Content-Length')[0])
 
-start = 0
+try:
+	start = pickle.load(open('downloaded_meta.pdmd', 'r'))
+	start+=1
+	
+	end = start+BLOCKSIZE-1
 
-if BLOCKSIZE - 1 > file_size:
+	os.remove('downloaded_meta.pdmd')
 
-	end = file_size
+except IOError:
 
-else:
+	start = 0
 
-	end = BLOCKSIZE - 1
+	if BLOCKSIZE - 1 > file_size:
+
+		end = file_size
+
+	else:
+
+		end = BLOCKSIZE - 1
 
 def get_filename():
 
@@ -28,7 +42,7 @@ def get_filename():
 
 	return filename
 
-def downloader(url, start, end):
+def downloader():
 
 	req = urllib2.Request(url)
 
@@ -40,17 +54,23 @@ def downloader(url, start, end):
 
 	return complete
 
-def start_download(url, BLOCKSIZE, start, end):
+def start_download():
+
+	global url, BLOCKSIZE, start, end
 
 	while end <= file_size:
 
-		packet = downloader(url, start, end)
+		packet = downloader()
 
 		f = open(filename, 'ab')
 
 		f.write(packet)
 
 		f.close()
+
+		print start, end, len(packet), file_size
+
+		raw_input()
 
 		if end==file_size: #Breaking the loop after complete download, finished download of end BLOCKSIZE bytes.
 			break
@@ -63,12 +83,15 @@ def start_download(url, BLOCKSIZE, start, end):
 		else:
 			end += BLOCKSIZE
 
-	rename(filename, ".".join(filename.split('.')[:-1]))
+	os.rename(filename, ".".join(filename.split('.')[:-1]))
 
 filename = get_filename()+'.pdt'
 
 print "\nStarting Download...\n"
 
-start_download(url, BLOCKSIZE, start, end)
+try:
+	start_download()
+except KeyboardInterrupt:
+	pickle.dump(end, open('downloaded_meta.pdmd', 'w'))
 
 print "Download Complete!\n"
