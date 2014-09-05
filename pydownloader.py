@@ -8,7 +8,7 @@ import os
 
 BLOCKSIZE = (1024**2) # 1024 Kibibytes in 1 packet.
 
-url = "http://localhost/firefox-29.0.tar.bz2"
+url = raw_input("Download File : ")
 
 metadata = (urllib2.urlopen(url)).info()
 
@@ -81,13 +81,15 @@ def start_download():
 
 	os.rename(filename, ".".join(filename.split('.')[:-1]))
 
-filename = get_filename()+'.pdt'
+filename = get_filename()+'.pdt' #.pdt = pydownloader temperory.
 
 print "\nStarting Download...\n"
 
 try:
 	start_download()
+
 except KeyboardInterrupt:
-	pickle.dump(end, open('downloaded_meta.pdmd', 'w'))
+
+	pickle.dump(end, open('downloaded_meta.pdmd', 'w')) #.pdmd = pydownloader meta data file.
 
 print "Download Complete!\n"
