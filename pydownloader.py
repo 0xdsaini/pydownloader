@@ -46,7 +46,7 @@ def start_download(url, BLOCKSIZE, start, end):
 
 		packet = downloader(url, start, end)
 
-		f = open(filename, 'aw')
+		f = open(filename, 'ab')
 
 		f.write(packet)
 
