@@ -68,10 +68,6 @@ def start_download():
 
 		f.close()
 
-		print start, end, len(packet), file_size
-
-		raw_input()
-
 		if end==file_size: #Breaking the loop after complete download, finished download of end BLOCKSIZE bytes.
 			break
 
