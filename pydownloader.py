@@ -6,33 +6,60 @@ import pickle
 
 import os
 
+import hashlib
+
 BLOCKSIZE = (1024**2) # 1024 Kibibytes in 1 packet.
 
-url = raw_input("Download File : ")
+def get_info_dict():
 
-metadata = (urllib2.urlopen(url)).info()
+	if os.path.isfile(pdtmd):
+		
+		f = open(pdtmd, 'r')
 
-file_size = int(metadata.getheaders('Content-Length')[0])
+		info_dict = pickle.load(f)			
 
-try:
-	start = pickle.load(open('downloaded_meta.pdmd', 'r'))
-	start+=1
-	
-	end = start+BLOCKSIZE-1
-
-	os.remove('downloaded_meta.pdmd')
-
-except IOError:
-
-	start = 0
-
-	if BLOCKSIZE - 1 > file_size:
-
-		end = file_size
+		f.close()
 
 	else:
 
-		end = BLOCKSIZE - 1
+		info_dict = {}
+
+	return info_dict	
+
+def update_pdtmd(filepath=None, packet_hash=None, downloaded_bytes=None): #Update pydownloader temperory metadata
+
+	global info_dict
+
+	if not info_dict.__len__()==0:
+
+		for _filepath in info_dict.keys():
+
+			if not os.path.isfile(_filepath):
+
+				info_dict.pop(_filepath)
+
+		f = open(pdtmd, 'w')
+
+		pickle.dump(info_dict, f)
+
+		f.close()
+
+	#Updating with the provided key, values
+
+	if (filepath and packet_hash and downloaded_bytes):
+		
+		info_dict[filepath] = (packet_hash, downloaded_bytes)
+
+		f = open(pdtmd, 'w')
+		
+		pickle.dump(info_dict, f)
+
+		f.close()
+
+	else:
+
+		return False
+
 
 def get_filename():
 
@@ -56,32 +83,85 @@ def downloader():
 
 def start_download():
 
-	global url, BLOCKSIZE, start, end
+	global url, BLOCKSIZE, start, end, packet_hash
+
+	packet_hash = hashlib.sha256('')
 
 	while end <= file_size:
 
-		packet = downloader()
+		packet = downloader() #Download single packet
+		
+		packet_hash.update(packet) #Seeding the hash with BLOCKSIZE size of packet.
 
-		f = open(filename, 'ab')
+		f = open(temp_filename, 'ab')
 
-		f.write(packet)
+		f.write(packet) #Appending packet data into a file.
 
 		f.close()
+
+		print start, end, len(packet), file_size
 
 		if end==file_size: #Breaking the loop after complete download, finished download of end BLOCKSIZE bytes.
 			break
 
 		start += BLOCKSIZE
 
-		if end + BLOCKSIZE - 1 >= file_size: #Equal to too because in else condition, it will download 1 less than total size i.e. the last byte will be left.
+		if end + BLOCKSIZE - 1 >= file_size: #Equal to too because in else condition, it will download 1 less than total size i.e. the last byte will be left undownloaded.
+
 			end = file_size
 
 		else:
 			end += BLOCKSIZE
 
-	os.rename(filename, ".".join(filename.split('.')[:-1]))
+	os.rename(temp_filename, filename)
 
-filename = get_filename()+'.pdt' #.pdt = pydownloader temperory.
+
+url = raw_input("Download File : ")
+
+metadata = (urllib2.urlopen(url)).info()
+
+file_size = int(metadata.getheaders('Content-Length')[0])
+
+home = os.environ['HOME']
+
+pdtmd = home+'/'+'.pdtmd'
+
+current_dir = os.getcwd()
+
+info_dict = get_info_dict()
+
+filename = get_filename()
+
+filepath = current_dir+'/'+filename
+
+temp_filename = filename+'.pdt' #.pdt = pydownloader temperory.
+
+temp_filepath = current_dir+'/'+temp_filename
+
+update_pdtmd()
+
+try:
+	print info_dict
+	raw_input()
+	start = info_dict[temp_filepath][1]
+	start+=1
+	
+	end = start+BLOCKSIZE-1
+	
+	print start, end
+	raw_input()
+
+except KeyError:
+
+	start = 0
+
+	if BLOCKSIZE - 1 > file_size:
+
+		end = file_size
+
+	else:
+
+		end = BLOCKSIZE - 1
 
 print "\nStarting Download...\n"
 
@@ -89,7 +169,15 @@ try:
 	start_download()
 
 except KeyboardInterrupt:
+	
+	os.system('clear')
 
-	pickle.dump(end, open('downloaded_meta.pdmd', 'w')) #.pdmd = pydownloader meta data file.
+	packet_hash = packet_hash.hexdigest()
+
+	update_pdtmd(filepath=temp_filepath, packet_hash=packet_hash, downloaded_bytes=start)
+
+	print "\n File : "+filename+"\n"+" Download Paused!\n"
+
+	exit()
 
 print "Download Complete!\n"
