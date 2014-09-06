@@ -83,12 +83,12 @@ def downloader():
 
 def start_download():
 
-	global url, BLOCKSIZE, start, end, packet_hash
+	global url, BLOCKSIZE, start, end, packet_hash, downloaded_bytes
 
 	packet_hash = hashlib.sha256('')
 
 	while end <= file_size:
-
+		
 		packet = downloader() #Download single packet
 		
 		packet_hash.update(packet) #Seeding the hash with BLOCKSIZE size of packet.
@@ -98,8 +98,8 @@ def start_download():
 		f.write(packet) #Appending packet data into a file.
 
 		f.close()
-
-		print start, end, len(packet), file_size
+		
+		downloaded_bytes = end #When 'end' bytes are downloaded and stored on the disk
 
 		if end==file_size: #Breaking the loop after complete download, finished download of end BLOCKSIZE bytes.
 			break
@@ -141,16 +141,11 @@ temp_filepath = current_dir+'/'+temp_filename
 update_pdtmd()
 
 try:
-	print info_dict
-	raw_input()
 	start = info_dict[temp_filepath][1]
 	start+=1
 	
 	end = start+BLOCKSIZE-1
 	
-	print start, end
-	raw_input()
-
 except KeyError:
 
 	start = 0
@@ -174,7 +169,7 @@ except KeyboardInterrupt:
 
 	packet_hash = packet_hash.hexdigest()
 
-	update_pdtmd(filepath=temp_filepath, packet_hash=packet_hash, downloaded_bytes=start)
+	update_pdtmd(filepath=temp_filepath, packet_hash=packet_hash, downloaded_bytes=downloaded_bytes)
 
 	print "\n File : "+filename+"\n"+" Download Paused!\n"
 
