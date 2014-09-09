@@ -1,14 +1,11 @@
 #!/usr/bin/env python
 
 import urllib2
-
 import pickle
-
 import os
-
 import hashlib
 
-BLOCKSIZE = (1024**2) # 1024 Kibibytes in 1 packet.
+BLOCKSIZE = (1024**2)/2 # 1024 Kibibytes in 1 packet.
 
 def get_info_dict():
 
