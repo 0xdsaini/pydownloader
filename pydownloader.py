@@ -5,7 +5,7 @@ import pickle
 import os
 import hashlib
 
-BLOCKSIZE = (1024**2)/2 # 1024 Kibibytes in 1 packet.
+BLOCKSIZE = (1024**2)/2 # 512 Kibibytes in 1 packet.
 
 def get_info_dict():
 
@@ -57,7 +57,6 @@ def update_pdtmd(filepath=None, packet_hash=None, downloaded_bytes=None): #Updat
 
 		return False
 
-
 def get_filename():
 
 	temp = url.split('/')
@@ -86,8 +85,8 @@ def start_download():
 
 	while end <= file_size:
 		
-		packet = downloader() #Download single packet
-		
+		packet = downloader() #Download single packet	
+
 		packet_hash.update(packet) #Seeding the hash with BLOCKSIZE size of packet.
 
 		f = open(temp_filename, 'ab')
@@ -97,6 +96,8 @@ def start_download():
 		f.close()
 		
 		downloaded_bytes = end #When 'end' bytes are downloaded and stored on the disk
+
+		print "\n Downloaded %s KiB" %((downloaded_bytes/1024)+1)
 
 		if end==file_size: #Breaking the loop after complete download, finished download of end BLOCKSIZE bytes.
 			break
@@ -167,9 +168,8 @@ except KeyboardInterrupt:
 	packet_hash = packet_hash.hexdigest()
 
 	update_pdtmd(filepath=temp_filepath, packet_hash=packet_hash, downloaded_bytes=downloaded_bytes)
-
+	
 	print "\n File : "+filename+"\n"+" Download Paused!\n"
 
 	exit()
-
 print "Download Complete!\n"
